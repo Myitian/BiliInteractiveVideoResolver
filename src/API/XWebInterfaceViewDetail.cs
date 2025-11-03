@@ -1,17 +1,18 @@
-#if DEBUG
-using System.Text.Json;
-#else
+using BiliInteractiveVideoResolver;
 using System.Net.Http.Json;
-#endif
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace BiliInteractiveVideoResolver.API;
+namespace LibBiliInteractiveVideo.API;
 
 /// <summary>
 /// x/web-interface/view/detail
 /// </summary>
 public static class XWebInterfaceViewDetail
 {
+    public static event Action<string>? RequestReady;
+    public static event Action<string>? RawJsonReceived;
+
     public struct Root
     {
         [JsonPropertyName("message")]
@@ -36,16 +37,21 @@ public static class XWebInterfaceViewDetail
         public ulong Cid { get; set; }
     }
 
-    public static async Task<Root> GetAsync(HttpClient client, ulong? aid = null, string? bvid = null)
+    public static async Task<Root> GetAsync(
+        HttpClient client,
+        ulong? aid = null,
+        string? bvid = null,
+        CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         string url = $"https://api.bilibili.com/x/web-interface/view/detail?{(aid is not null ? $"&aid={aid}" : "")}{(bvid is not null ? $"&bvid={bvid}" : "")}";
-#if DEBUG
-        Console.Error.WriteLine(url);
-        string json = await client.GetStringAsync(url);
-        File.WriteAllText($"XWebInterfaceViewDetail.{DateTime.UtcNow.Ticks}.json", json);
-        return JsonSerializer.Deserialize(json, AppJsonSerializerContext.Default.XWebInterfaceViewDetail_Root);
-#else
-        return await client.GetFromJsonAsync(url, AppJsonSerializerContext.Default.XWebInterfaceViewDetail_Root);
-#endif
+        RequestReady?.Invoke(url);
+        if (RawJsonReceived is not null)
+        {
+            string json = await client.GetStringAsync(url, cancellationToken);
+            RawJsonReceived?.Invoke(json);
+            return JsonSerializer.Deserialize(json, AppJsonSerializerContext.Default.XWebInterfaceViewDetail_Root);
+        }
+        return await client.GetFromJsonAsync(url, AppJsonSerializerContext.Default.XWebInterfaceViewDetail_Root, cancellationToken);
     }
 }

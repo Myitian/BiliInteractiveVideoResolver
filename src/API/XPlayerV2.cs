@@ -1,17 +1,18 @@
-#if DEBUG
-using System.Text.Json;
-#else
+using BiliInteractiveVideoResolver;
 using System.Net.Http.Json;
-#endif
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace BiliInteractiveVideoResolver.API;
+namespace LibBiliInteractiveVideo.API;
 
 /// <summary>
 /// x/player/v2
 /// </summary>
 public class XPlayerV2
 {
+    public static event Action<string>? RequestReady;
+    public static event Action<string>? RawJsonReceived;
+
     public struct Root
     {
         [JsonPropertyName("message")]
@@ -33,16 +34,22 @@ public class XPlayerV2
         public ulong GraphVersion { get; set; }
     }
 
-    public static async Task<Root> GetAsync(HttpClient client, ulong cid, ulong? aid = null, string? bvid = null)
+    public static async Task<Root> GetAsync(
+        HttpClient client,
+        ulong cid,
+        ulong? aid = null,
+        string? bvid = null,
+        CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         string url = $"https://api.bilibili.com/x/player/v2?cid={cid}{(aid is not null ? $"&aid={aid}" : "")}{(bvid is not null ? $"&bvid={bvid}" : "")}";
-#if DEBUG
-        Console.Error.WriteLine(url);
-        string json = await client.GetStringAsync(url);
-        File.WriteAllText($"XPlayerV2.{DateTime.UtcNow.Ticks}.json", json);
-        return JsonSerializer.Deserialize(json, AppJsonSerializerContext.Default.XPlayerV2_Root);
-#else
-        return await client.GetFromJsonAsync(url, AppJsonSerializerContext.Default.XPlayerV2_Root);
-#endif
+        RequestReady?.Invoke(url);
+        if (RawJsonReceived is not null)
+        {
+            string json = await client.GetStringAsync(url, cancellationToken);
+            RawJsonReceived?.Invoke(json);
+            return JsonSerializer.Deserialize(json, AppJsonSerializerContext.Default.XPlayerV2_Root);
+        }
+        return await client.GetFromJsonAsync(url, AppJsonSerializerContext.Default.XPlayerV2_Root, cancellationToken);
     }
 }

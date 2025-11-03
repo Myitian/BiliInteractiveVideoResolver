@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="example/ResolveAllEdges/ResolveAllEdges.csproj" />
+  <Project Path="example/ResolveShortestPath/ResolveShortestPath.csproj" />
+  <Project Path="example/Test/Test.csproj" Id="e39bc9fb-423d-43b5-8dc5-7bb71603055d" />
+  <Project Path="src/LibBiliInteractiveVideo.csproj" />
+</Solution>

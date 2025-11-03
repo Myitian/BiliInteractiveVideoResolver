@@ -1,4 +1,4 @@
-using BiliInteractiveVideoResolver.API;
+using LibBiliInteractiveVideo.API;
 using System.Text.Json.Serialization;
 
 namespace BiliInteractiveVideoResolver;
@@ -9,4 +9,4 @@ namespace BiliInteractiveVideoResolver;
 [JsonSerializable(typeof(XPlayerV2.Data), TypeInfoPropertyName = $"{nameof(XPlayerV2)}_{nameof(XPlayerV2.Data)}")]
 [JsonSerializable(typeof(XSteinEdgeinfoV2.Root), TypeInfoPropertyName = $"{nameof(XSteinEdgeinfoV2)}_{nameof(XSteinEdgeinfoV2.Root)}")]
 [JsonSerializable(typeof(XSteinEdgeinfoV2.Data), TypeInfoPropertyName = $"{nameof(XSteinEdgeinfoV2)}_{nameof(XSteinEdgeinfoV2.Data)}")]
-internal partial class AppJsonSerializerContext : JsonSerializerContext;
+public partial class AppJsonSerializerContext : JsonSerializerContext;
